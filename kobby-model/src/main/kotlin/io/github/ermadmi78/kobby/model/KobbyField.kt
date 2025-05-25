@@ -18,7 +18,7 @@ class KobbyField internal constructor(
     internal val primaryKey: Boolean,
     internal val required: Boolean,
     internal val default: Boolean,
-    internal val selection: Boolean,
+    val selection: Boolean,
     internal val _comments: List<String>,
     val arguments: Map<String, KobbyArgument>
 ) {

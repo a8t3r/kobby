@@ -303,7 +303,7 @@ data class KotlinLayout(
 
     internal val KobbyField.lambda: Pair<String, LambdaTypeName>?
         get() = overriddenField?.lambda
-            ?: if (isSelection) {
+            ?: if (isSelectionEnabled) {
                 if (type.hasProjection) {
                     entity.selection.queryArgument to
                             LambdaTypeName.get(queryClass, emptyList(), UNIT)
@@ -360,7 +360,7 @@ data class KotlinLayout(
         get() = (name + number).decorate(impl.innerDecoration)
 
     internal val KobbyField.innerClass: ClassName
-        get() = if (isSelection) {
+        get() = if (isSelectionEnabled) {
             if (type.hasProjection) implQueryClass else implSelectionClass
         } else {
             if (type.hasProjection) type.node.implProjectionClass else BOOLEAN
@@ -370,7 +370,7 @@ data class KotlinLayout(
         get() = if (innerIsBoolean) BOOLEAN else innerClass.nullable()
 
     internal val KobbyField.innerIsBoolean: Boolean
-        get() = !isSelection && !type.hasProjection
+        get() = !isSelectionEnabled && !type.hasProjection
 
     internal val KobbyField.innerInitializer: String
         get() = when {
@@ -395,6 +395,15 @@ data class KotlinLayout(
     internal val KobbyArgument.innerName: String
         get() = (field.name + field.number + name._capitalize())
             .decorate(impl.innerDecoration)
+
+    internal val KobbyField.isProjectionPropertyEnabled: Boolean
+        get() = entity.projection.enableNotationWithoutParentheses && !isDefault && isProperty
+
+    internal val KobbyField.isSelectionEnabled: Boolean
+        get() = !entity.projection.enableNotationWithoutParentheses && isSelection
+
+    internal val KobbyArgument.isSelectionEnabled: Boolean
+        get() = !entity.projection.enableNotationWithoutParentheses && isSelection
 
     // *****************************************************************************************************************
     //                                          Context
@@ -606,7 +615,8 @@ class KotlinEntityProjectionLayout(
     val minimizeFun: String,
     val qualificationDecoration: Decoration,
     val qualifiedProjectionDecoration: Decoration,
-    val onDecoration: Decoration
+    val onDecoration: Decoration,
+    val enableNotationWithoutParentheses: Boolean
 )
 
 class KotlinEntitySelectionLayout(

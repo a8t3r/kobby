@@ -405,7 +405,7 @@ private fun FileSpecBuilder.buildEntity(node: KobbyNode, layout: KotlinLayout) =
 }
 
 private fun FileSpecBuilder.buildSelection(node: KobbyNode, layout: KotlinLayout) = with(layout) {
-    node.fields.values.asSequence().filter { !it.isOverride && it.isSelection }.forEach { field ->
+    node.fields.values.asSequence().filter { !it.isOverride && it.isSelectionEnabled }.forEach { field ->
         val isQuery = field.type.hasProjection
         buildClass(if (isQuery) field.implQueryName else field.implSelectionName) {
             if (impl.internal) {
@@ -477,7 +477,7 @@ private fun FileSpecBuilder.buildProjection(node: KobbyNode, layout: KotlinLayou
                 initializer(field.innerInitializer)
             }
             field.arguments.values.asSequence()
-                .filter { !field.isSelection || !it.isInitialized }
+                .filter { !field.isSelectionEnabled || !it.isInitialized }
                 .forEach { arg ->
                     val argType = if (dto.serialization.enabled) {
                         arg.entityTypeWithSerializer.nullable()
@@ -493,48 +493,57 @@ private fun FileSpecBuilder.buildProjection(node: KobbyNode, layout: KotlinLayou
                     }
                 }
 
-            buildFunction(field.projectionFieldName) {
-                addModifiers(OVERRIDE)
-                field.arguments.values.asSequence()
-                    .filter { !field.isSelection || !it.isInitialized }
-                    .forEach { arg ->
-                        buildParameter(arg.name, arg.entityType)
+            if (field.isProjectionPropertyEnabled) {
+                buildProperty(field.projectionFieldName, UNIT) {
+                    addModifiers(OVERRIDE)
+                    buildGetter {
+                        addStatement("${field.innerName}·=·${!field.isDefault}")
                     }
+                }
+            } else {
+                buildFunction(field.projectionFieldName) {
+                    addModifiers(OVERRIDE)
+                    field.arguments.values.asSequence()
+                        .filter { !field.isSelectionEnabled || !it.isInitialized }
+                        .forEach { arg ->
+                            buildParameter(arg.name, arg.entityType)
+                        }
 
-                field.lambda?.also {
-                    buildParameter(it)
-                    addStatement(
-                        "${field.innerName}·=·%T().%M(${it.first})",
-                        field.innerClass,
-                        MemberName("kotlin", "apply")
-                    )
-                } ?: addStatement("${field.innerName}·=·${!field.isDefault}")
-
-                field.arguments.values.asSequence()
-                    .filter { !field.isSelection || !it.isInitialized }
-                    .forEach { arg ->
-                        addStatement("${arg.innerName}·=·${arg.name.escape()}")
-                    }
-
-                if (node.kind == INTERFACE || node.kind == UNION) {
-                    node.subObjects { subObject ->
-                        addStatement("")
-
-                        val subField = subObject.fields[field.name] ?: invalidSchema(
-                            "The object type '${subObject.name}' does not have a field '${field.name}' " +
-                                    "required via interface '${node.name}'"
+                    field.lambda?.also {
+                        buildParameter(it)
+                        addStatement(
+                            "${field.innerName}·=·%T().%M(${it.first})",
+                            field.innerClass,
+                            MemberName("kotlin", "apply")
                         )
-                        addStatement("${subObject.innerProjectionOnName}.${subField.innerName}·=·${field.innerName}")
-                        subField.arguments.values.asSequence()
-                            .filter { !subField.isSelection || !it.isInitialized }
-                            .forEach { subArg ->
-                                addStatement("${subObject.innerProjectionOnName}.${subArg.innerName}·=·${subArg.name.escape()}")
-                            }
-                    }
+                    } ?: addStatement("${field.innerName}·=·${!field.isDefault}")
 
-                    if (node.kind == INTERFACE && !field.isDefault) {
-                        addStatement("")
-                        addStatement("${impl.interfaceIgnore.first}·+=·%S", field.name)
+                    field.arguments.values.asSequence()
+                        .filter { !field.isSelectionEnabled || !it.isInitialized }
+                        .forEach { arg ->
+                            addStatement("${arg.innerName}·=·${arg.name.escape()}")
+                        }
+
+                    if (node.kind == INTERFACE || node.kind == UNION) {
+                        node.subObjects { subObject ->
+                            addStatement("")
+
+                            val subField = subObject.fields[field.name] ?: invalidSchema(
+                                "The object type '${subObject.name}' does not have a field '${field.name}' " +
+                                        "required via interface '${node.name}'"
+                            )
+                            addStatement("${subObject.innerProjectionOnName}.${subField.innerName}·=·${field.innerName}")
+                            subField.arguments.values.asSequence()
+                                .filter { !subField.isSelectionEnabled || !it.isInitialized }
+                                .forEach { subArg ->
+                                    addStatement("${subObject.innerProjectionOnName}.${subArg.innerName}·=·${subArg.name.escape()}")
+                                }
+                        }
+
+                        if (node.kind == INTERFACE && !field.isDefault) {
+                            addStatement("")
+                            addStatement("${impl.interfaceIgnore.first}·+=·%S", field.name)
+                        }
                     }
                 }
             }
@@ -587,11 +596,11 @@ private fun FileSpecBuilder.buildProjection(node: KobbyNode, layout: KotlinLayou
 
                 ifFlow("%S·!in·$ignore·&&·$condition", field.name) {
                     var args = field.arguments.values.asSequence()
-                        .filter { !field.isSelection || !it.isInitialized }
+                        .filter { !field.isSelectionEnabled || !it.isInitialized }
                         .joinToString {
                             it.innerName + if (it.isInitialized) "" else "!!"
                         }
-                    if (field.type.hasProjection || field.isSelection) {
+                    if (field.type.hasProjection || field.isSelectionEnabled) {
                         if (args.isNotEmpty()) {
                             args = "($args)"
                         }
@@ -602,16 +611,24 @@ private fun FileSpecBuilder.buildProjection(node: KobbyNode, layout: KotlinLayou
                                             ".${field.innerName}!!.${impl.repeatProjectionFunName}(%T(),·this)"
                                 }
                             }
-                            if (field.isSelection) statement {
+                            if (field.isSelectionEnabled) statement {
                                 "this@${node.implProjectionName}" +
                                         ".${field.innerName}!!.${impl.repeatSelectionFunName}(this)"
                             }
                         }
                     } else {
-                        addStatement("$repeat.${field.projectionFieldName.escape()}($args)")
+                        addStatement(
+                            buildString {
+                                append(repeat)
+                                append('.')
+                                append(field.projectionFieldName.escape())
+                                if (!field.isProjectionPropertyEnabled) {
+                                    append("($args)")
+                                }
+                            }
+                        )
                     }
                 }
-
             }
 
             node.subObjects { subObject ->
@@ -732,7 +749,7 @@ private fun FunSpecBuilder.writeFieldProjectionBuilderCode(field: KobbyField, la
                 else args.asSequence()
                     .map { arg ->
                         require(arg.isInitialized) { "Invalid algorithm" }
-                        if (arg.isSelection) "${field.innerName}!!.${arg.name.escape()}" else arg.innerName
+                        if (arg.isSelectionEnabled) "${field.innerName}!!.${arg.name.escape()}" else arg.innerName
                     }
                     .joinToString(" || ") { "$it·!=·null" }
             }
@@ -743,7 +760,7 @@ private fun FunSpecBuilder.writeFieldProjectionBuilderCode(field: KobbyField, la
             addStatement("")
             field.arguments { arg ->
                 val argName =
-                    if (arg.isSelection) "${field.innerName}!!.${arg.name.escape()}" else arg.innerName
+                    if (arg.isSelectionEnabled) "${field.innerName}!!.${arg.name.escape()}" else arg.innerName
                 addComment("Argument: ${field.name}.${arg.name}")
                 ifFlow(if (arg.isInitialized) "$argName·!=·null" else "true") {
                     ifFlow("counter++·>·0") {

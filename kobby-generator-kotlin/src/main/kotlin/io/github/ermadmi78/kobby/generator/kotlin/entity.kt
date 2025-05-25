@@ -3,6 +3,7 @@ package io.github.ermadmi78.kobby.generator.kotlin
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.KModifier.ABSTRACT
 import com.squareup.kotlinpoet.KModifier.OVERRIDE
+import com.squareup.kotlinpoet.UNIT
 import io.github.ermadmi78.kobby.model.KobbyNode
 import io.github.ermadmi78.kobby.model.KobbyNodeKind.OBJECT
 import io.github.ermadmi78.kobby.model.KobbySchema
@@ -134,37 +135,49 @@ private fun FileSpecBuilder.buildProjection(node: KobbyNode, layout: KotlinLayou
             addKdoc("%L", it)
         }
         node.fields.values.asSequence().filter { !it.isRequired }.forEach { field ->
-            buildFunction(field.projectionFieldName) {
-                addModifiers(ABSTRACT)
-                if (field.isOverride) {
-                    addModifiers(OVERRIDE)
+            if (field.isProjectionPropertyEnabled) {
+                buildProperty(field.projectionFieldName, UNIT) {
+                    addModifiers(ABSTRACT)
+                    if (field.isOverride) {
+                        addModifiers(OVERRIDE)
+                    }
+                    field.comments {
+                        addKdoc("%L", it)
+                    }
                 }
-                field.comments {
-                    addKdoc("%L", it)
-                }
+            } else {
+                buildFunction(field.projectionFieldName) {
+                    addModifiers(ABSTRACT)
+                    if (field.isOverride) {
+                        addModifiers(OVERRIDE)
+                    }
+                    field.comments {
+                        addKdoc("%L", it)
+                    }
 
-                field.arguments.values.asSequence()
-                    .filter { !field.isSelection || !it.isInitialized }
-                    .forEach { arg ->
-                        buildParameter(arg.name, arg.entityType) {
-                            if (!field.isOverride && arg.isInitialized && !field.isMultiBase) {
-                                defaultValue("null")
-                            }
-                            arg.comments {
-                                addKdoc("%L", it)
-                            }
-                            arg.defaultValue?.also { literal ->
-                                if (arg.comments.isNotEmpty()) {
-                                    addKdoc("%L", " ");
+                    field.arguments.values.asSequence()
+                        .filter { !field.isSelectionEnabled || !it.isInitialized }
+                        .forEach { arg ->
+                            buildParameter(arg.name, arg.entityType) {
+                                if (!field.isOverride && arg.isInitialized && !field.isMultiBase) {
+                                    defaultValue("null")
                                 }
-                                addKdoc("%L", "Default: $literal")
+                                arg.comments {
+                                    addKdoc("%L", it)
+                                }
+                                arg.defaultValue?.also { literal ->
+                                    if (arg.comments.isNotEmpty()) {
+                                        addKdoc("%L", " ");
+                                    }
+                                    addKdoc("%L", "Default: $literal")
+                                }
                             }
                         }
-                    }
-                field.lambda?.also {
-                    buildParameter(it) {
-                        if (!field.isOverride && field.type.node.hasDefaults) {
-                            defaultValue("{}")
+                    field.lambda?.also {
+                        buildParameter(it) {
+                            if (!field.isOverride && field.type.node.hasDefaults) {
+                                defaultValue("{}")
+                            }
                         }
                     }
                 }
@@ -184,7 +197,7 @@ private fun FileSpecBuilder.buildProjection(node: KobbyNode, layout: KotlinLayou
 }
 
 private fun FileSpecBuilder.buildSelection(node: KobbyNode, layout: KotlinLayout) = with(layout) {
-    node.fields.values.asSequence().filter { !it.isOverride && it.isSelection }.forEach { field ->
+    node.fields.values.asSequence().filter { !it.isOverride && it.isSelectionEnabled }.forEach { field ->
         buildInterface(field.selectionName) {
             addAnnotation(context.dslClass)
             field.comments {

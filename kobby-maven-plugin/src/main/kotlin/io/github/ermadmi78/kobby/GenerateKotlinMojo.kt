@@ -262,7 +262,8 @@ class GenerateKotlinMojo : AbstractMojo() {
                         entity.projection.qualifiedProjectionPrefix,
                         entity.projection.qualifiedProjectionPostfix
                     ),
-                    Decoration(entity.projection.onPrefix, entity.projection.onPostfix)
+                    Decoration(entity.projection.onPrefix, entity.projection.onPostfix),
+                    entity.projection.enableNotationWithoutParentheses
                 ),
                 KotlinEntitySelectionLayout(
                     Decoration(entity.selection.selectionPrefix, entity.selection.selectionPostfix),
@@ -325,6 +326,14 @@ class GenerateKotlinMojo : AbstractMojo() {
             }
         } catch (e: Exception) {
             "Schema validation failed.".throwIt(e)
+        }
+
+        try {
+            kobbySchema.validateKotlin(layout).forEach { warning ->
+                log.warn(warning)
+            }
+        } catch (e: Exception) {
+            "Kotlin schema validation failed.".throwIt(e)
         }
 
         val output = try {
