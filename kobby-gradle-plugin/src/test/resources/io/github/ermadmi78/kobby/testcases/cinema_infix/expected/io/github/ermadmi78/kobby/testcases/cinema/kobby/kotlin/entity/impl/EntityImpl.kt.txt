@@ -23,10 +23,10 @@ import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.dto.FilmDto
 import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.entity.ActorProjection
 import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.entity.CountryProjection
 import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.entity.Entity
-import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.entity.EntityFieldsSelection
 import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.entity.EntityQualifiedProjection
 import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.entity.FilmProjection
 import kotlin.Any
+import kotlin.Boolean
 import kotlin.String
 import kotlin.Suppress
 import kotlin.Unit
@@ -44,7 +44,9 @@ import kotlin.text.isNotEmpty
 internal open class EntityQualifiedProjectionImpl : EntityQualifiedProjection {
   internal val ___innerIgnore: MutableSet<String> = mutableSetOf("id")
 
-  internal var __innerFields1: EntityFieldsSelectionImpl? = null
+  internal var __innerFields1: Boolean = false
+
+  internal var __innerFields1Keys: List<String>? = null
 
   internal val ___inner__onFilm: FilmProjectionImpl = FilmProjectionImpl()
 
@@ -52,14 +54,18 @@ internal open class EntityQualifiedProjectionImpl : EntityQualifiedProjection {
 
   internal val ___inner__onCountry: CountryProjectionImpl = CountryProjectionImpl()
 
-  override fun fields(__selection: EntityFieldsSelection.() -> Unit) {
-    __innerFields1 = EntityFieldsSelectionImpl().apply(__selection)
+  override fun fields(keys: List<String>?) {
+    __innerFields1 = true
+    __innerFields1Keys = keys
 
     ___inner__onFilm.__innerFields1 = __innerFields1
+    ___inner__onFilm.__innerFields1Keys = keys
 
     ___inner__onActor.__innerFields1 = __innerFields1
+    ___inner__onActor.__innerFields1Keys = keys
 
     ___inner__onCountry.__innerFields1 = __innerFields1
+    ___inner__onCountry.__innerFields1Keys = keys
 
     ___innerIgnore += "fields"
   }
@@ -79,10 +85,8 @@ internal open class EntityQualifiedProjectionImpl : EntityQualifiedProjection {
   @Suppress("UNUSED_PARAMETER", "UNUSED_CHANGED_VALUE", "KotlinConstantConditions")
   internal fun ___innerRepeatProjection(ignore: Set<String>,
       __projection: EntityQualifiedProjection) {
-    if ("fields" !in ignore && __innerFields1 != null) {
-      __projection.fields {
-        this@EntityQualifiedProjectionImpl.__innerFields1!!.___innerRepeatSelection(this)
-      }
+    if ("fields" !in ignore && __innerFields1) {
+      __projection.fields(__innerFields1Keys)
     }
     __projection.__onFilm {
       this@EntityQualifiedProjectionImpl.___inner__onFilm.___innerRepeatProjection(setOf(), this)
@@ -105,21 +109,21 @@ internal open class EntityQualifiedProjectionImpl : EntityQualifiedProjection {
     body: StringBuilder,
     arguments: MutableMap<String, Any>,
   ) {
-    if ("fields" !in ignore && __innerFields1 != null) {
+    if ("fields" !in ignore && __innerFields1) {
       body.append(' ').append("fields")
       var counter = 0
-      val addBrackets = __innerFields1!!.keys != null
+      val addBrackets = __innerFields1Keys != null
       if (addBrackets) {
         body.append('(')
       }
 
       // Argument: fields.keys
-      if (__innerFields1!!.keys != null) {
+      if (__innerFields1Keys != null) {
         if (counter++ > 0) {
           body.append(", ")
         }
         val arg = "arg" + arguments.size
-        arguments[arg] = __innerFields1!!.keys!!
+        arguments[arg] = __innerFields1Keys!!
         body.append("keys").append(": ").append('$').append(arg)
 
         if (header.isNotEmpty()) {
@@ -180,15 +184,6 @@ internal open class EntityQualifiedProjectionImpl : EntityQualifiedProjection {
     }
 
     body.append(' ').append('}')
-  }
-}
-
-internal class EntityFieldsSelectionImpl : EntityFieldsSelection {
-  override var keys: List<String>? = null
-
-  @Suppress("UNUSED_PARAMETER", "UNUSED_CHANGED_VALUE", "KotlinConstantConditions")
-  internal fun ___innerRepeatSelection(__selection: EntityFieldsSelection) {
-    __selection.keys = keys
   }
 }
 

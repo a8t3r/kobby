@@ -88,10 +88,18 @@ public interface Film : Entity, Taggable, Native {
 @CinemaDSL
 public interface FilmProjection : EntityProjection, TaggableProjection, NativeProjection {
   /**
+   * Genre of film.
+   */
+  public val genre: Unit
+
+  /**
    * Fields of entity in key-value map.
    * Introduced for testing complex scalars.
+   *
+   * @param keys List of field keys to load. %
+   * If no keys specified all entity fields will be loaded.
    */
-  override fun fields(__selection: EntityFieldsSelection.() -> Unit)
+  override fun fields(keys: List<String>?)
 
   /**
    * Tags of entity
@@ -104,11 +112,6 @@ public interface FilmProjection : EntityProjection, TaggableProjection, NativePr
   public fun __withoutTitle()
 
   /**
-   * Genre of film.
-   */
-  public fun genre()
-
-  /**
    * The country to which the film belongs
    */
   public fun country(__projection: CountryProjection.() -> Unit = {})
@@ -116,62 +119,28 @@ public interface FilmProjection : EntityProjection, TaggableProjection, NativePr
   /**
    * Find actors of film by firstName, lastName, birthday and gender.
    * Returns empty list if not found.
+   *
+   * @param firstName Part of first name of actor to search
+   * @param lastName Part of last name of actor to search
+   * @param birthdayFrom Find actors whose birthday is greater than or equal to birthdayFrom
+   * @param birthdayTo Find actors whose birthday is less than or equal to birthdayTo
+   * @param gender Gender of actor to search
+   * @param limit Limit of result list.
+   * Put -1 to be unlimited. Default: 10
+   * @param offset Offset of result list. Default: 0
    */
-  public fun actors(__query: FilmActorsQuery.() -> Unit = {})
+  public fun actors(
+    firstName: String? = null,
+    lastName: String? = null,
+    birthdayFrom: LocalDate? = null,
+    birthdayTo: LocalDate? = null,
+    gender: Gender? = null,
+    limit: Int? = null,
+    offset: Int? = null,
+    __projection: ActorProjection.() -> Unit = {},
+  )
 
   override fun __minimize() {
     __withoutTitle()
   }
 }
-
-/**
- * Find actors of film by firstName, lastName, birthday and gender.
- * Returns empty list if not found.
- */
-@CinemaDSL
-public interface FilmActorsSelection {
-  /**
-   * Part of first name of actor to search
-   */
-  public var firstName: String?
-
-  /**
-   * Part of last name of actor to search
-   */
-  public var lastName: String?
-
-  /**
-   * Find actors whose birthday is greater than or equal to birthdayFrom
-   */
-  public var birthdayFrom: LocalDate?
-
-  /**
-   * Find actors whose birthday is less than or equal to birthdayTo
-   */
-  public var birthdayTo: LocalDate?
-
-  /**
-   * Gender of actor to search
-   */
-  public var gender: Gender?
-
-  /**
-   * Limit of result list.
-   * Put -1 to be unlimited.  
-   * > Default: 10
-   */
-  public var limit: Int?
-
-  /**
-   * Offset of result list.  
-   * > Default: 0
-   */
-  public var offset: Int?
-}
-
-/**
- * Find actors of film by firstName, lastName, birthday and gender.
- * Returns empty list if not found.
- */
-@CinemaDSL
-public interface FilmActorsQuery : FilmActorsSelection, ActorProjection

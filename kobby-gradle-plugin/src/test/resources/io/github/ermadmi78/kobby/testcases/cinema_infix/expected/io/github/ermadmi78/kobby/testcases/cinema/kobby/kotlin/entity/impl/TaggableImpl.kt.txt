@@ -20,16 +20,17 @@ import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.dto.ActorDto
 import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.dto.FilmDto
 import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.dto.TaggableDto
 import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.entity.ActorProjection
-import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.entity.EntityFieldsSelection
 import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.entity.FilmProjection
 import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.entity.TagProjection
 import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.entity.Taggable
 import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.entity.TaggableQualifiedProjection
 import kotlin.Any
+import kotlin.Boolean
 import kotlin.String
 import kotlin.Suppress
 import kotlin.Unit
 import kotlin.apply
+import kotlin.collections.List
 import kotlin.collections.MutableMap
 import kotlin.collections.MutableSet
 import kotlin.collections.Set
@@ -42,7 +43,9 @@ import kotlin.text.isNotEmpty
 internal open class TaggableQualifiedProjectionImpl : TaggableQualifiedProjection {
   internal val ___innerIgnore: MutableSet<String> = mutableSetOf("id")
 
-  internal var __innerFields1: EntityFieldsSelectionImpl? = null
+  internal var __innerFields1: Boolean = false
+
+  internal var __innerFields1Keys: List<String>? = null
 
   internal var __innerTags2: TagProjectionImpl? = null
 
@@ -50,12 +53,15 @@ internal open class TaggableQualifiedProjectionImpl : TaggableQualifiedProjectio
 
   internal val ___inner__onActor: ActorProjectionImpl = ActorProjectionImpl()
 
-  override fun fields(__selection: EntityFieldsSelection.() -> Unit) {
-    __innerFields1 = EntityFieldsSelectionImpl().apply(__selection)
+  override fun fields(keys: List<String>?) {
+    __innerFields1 = true
+    __innerFields1Keys = keys
 
     ___inner__onFilm.__innerFields1 = __innerFields1
+    ___inner__onFilm.__innerFields1Keys = keys
 
     ___inner__onActor.__innerFields1 = __innerFields1
+    ___inner__onActor.__innerFields1Keys = keys
 
     ___innerIgnore += "fields"
   }
@@ -81,10 +87,8 @@ internal open class TaggableQualifiedProjectionImpl : TaggableQualifiedProjectio
   @Suppress("UNUSED_PARAMETER", "UNUSED_CHANGED_VALUE", "KotlinConstantConditions")
   internal fun ___innerRepeatProjection(ignore: Set<String>,
       __projection: TaggableQualifiedProjection) {
-    if ("fields" !in ignore && __innerFields1 != null) {
-      __projection.fields {
-        this@TaggableQualifiedProjectionImpl.__innerFields1!!.___innerRepeatSelection(this)
-      }
+    if ("fields" !in ignore && __innerFields1) {
+      __projection.fields(__innerFields1Keys)
     }
     if ("tags" !in ignore && __innerTags2 != null) {
       __projection.tags {
@@ -109,21 +113,21 @@ internal open class TaggableQualifiedProjectionImpl : TaggableQualifiedProjectio
     body: StringBuilder,
     arguments: MutableMap<String, Any>,
   ) {
-    if ("fields" !in ignore && __innerFields1 != null) {
+    if ("fields" !in ignore && __innerFields1) {
       body.append(' ').append("fields")
       var counter = 0
-      val addBrackets = __innerFields1!!.keys != null
+      val addBrackets = __innerFields1Keys != null
       if (addBrackets) {
         body.append('(')
       }
 
       // Argument: fields.keys
-      if (__innerFields1!!.keys != null) {
+      if (__innerFields1Keys != null) {
         if (counter++ > 0) {
           body.append(", ")
         }
         val arg = "arg" + arguments.size
-        arguments[arg] = __innerFields1!!.keys!!
+        arguments[arg] = __innerFields1Keys!!
         body.append("keys").append(": ").append('$').append(arg)
 
         if (header.isNotEmpty()) {

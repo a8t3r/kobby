@@ -78,11 +78,13 @@ public interface MutationProjection {
    *
    * @param countryId ID of the country to which the film belongs
    * @param film Film input data
+   * @param tags Add tag to film if tag is not null
    */
   public fun createFilm(
     countryId: Long,
     film: FilmInput,
-    __query: MutationCreateFilmQuery.() -> Unit = {},
+    tags: TagInput? = null,
+    __projection: FilmProjection.() -> Unit = {},
   )
 
   /**
@@ -90,11 +92,13 @@ public interface MutationProjection {
    *
    * @param countryId ID of the country to which the actor belongs
    * @param actor Actor input data
+   * @param tags Add tag to actor if tag is not null
    */
   public fun createActor(
     countryId: Long,
     actor: ActorInput,
-    __query: MutationCreateActorQuery.() -> Unit = {},
+    tags: TagInput? = null,
+    __projection: ActorProjection.() -> Unit = {},
   )
 
   /**
@@ -126,37 +130,3 @@ public interface MutationProjection {
   public fun __minimize() {
   }
 }
-
-/**
- * Create film
- */
-@CinemaDSL
-public interface MutationCreateFilmSelection {
-  /**
-   * Add tag to film if tag is not null
-   */
-  public var tags: TagInput?
-}
-
-/**
- * Create film
- */
-@CinemaDSL
-public interface MutationCreateFilmQuery : MutationCreateFilmSelection, FilmProjection
-
-/**
- * Create actor
- */
-@CinemaDSL
-public interface MutationCreateActorSelection {
-  /**
-   * Add tag to actor if tag is not null
-   */
-  public var tags: TagInput?
-}
-
-/**
- * Create actor
- */
-@CinemaDSL
-public interface MutationCreateActorQuery : MutationCreateActorSelection, ActorProjection

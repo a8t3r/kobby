@@ -107,8 +107,20 @@ public interface QueryProjection {
   /**
    * Find films by title and genre.
    * Returns empty list if not found.
+   *
+   * @param title Part of title of film to search
+   * @param genre Genre of film to search
+   * @param limit Limit of result list.
+   * Put -1 to be unlimited. Default: 10
+   * @param offset Offset of result list. Default: 0
    */
-  public fun films(__query: QueryFilmsQuery.() -> Unit = {})
+  public fun films(
+    title: String? = null,
+    genre: Genre? = null,
+    limit: Int? = null,
+    offset: Int? = null,
+    __projection: FilmProjection.() -> Unit = {},
+  )
 
   /**
    * Find actor by id.
@@ -119,8 +131,26 @@ public interface QueryProjection {
   /**
    * Find actors by firstName, lastName, birthday and gender.
    * Returns empty list if not found.
+   *
+   * @param firstName Part of first name of actor to search
+   * @param lastName Part of last name of actor to search
+   * @param birthdayFrom Find actors whose birthday is greater than or equal to birthdayFrom
+   * @param birthdayTo Find actors whose birthday is less than or equal to birthdayTo
+   * @param gender Gender of actor to search
+   * @param limit Limit of result list.
+   * Put -1 to be unlimited. Default: 10
+   * @param offset Offset of result list. Default: 0
    */
-  public fun actors(__query: QueryActorsQuery.() -> Unit = {})
+  public fun actors(
+    firstName: String? = null,
+    lastName: String? = null,
+    birthdayFrom: LocalDate? = null,
+    birthdayTo: LocalDate? = null,
+    gender: Gender? = null,
+    limit: Int? = null,
+    offset: Int? = null,
+    __projection: ActorProjection.() -> Unit = {},
+  )
 
   /**
    * Find entities by tag
@@ -130,92 +160,3 @@ public interface QueryProjection {
   public fun __minimize() {
   }
 }
-
-/**
- * Find films by title and genre.
- * Returns empty list if not found.
- */
-@CinemaDSL
-public interface QueryFilmsSelection {
-  /**
-   * Part of title of film to search
-   */
-  public var title: String?
-
-  /**
-   * Genre of film to search
-   */
-  public var genre: Genre?
-
-  /**
-   * Limit of result list.
-   * Put -1 to be unlimited.  
-   * > Default: 10
-   */
-  public var limit: Int?
-
-  /**
-   * Offset of result list.  
-   * > Default: 0
-   */
-  public var offset: Int?
-}
-
-/**
- * Find films by title and genre.
- * Returns empty list if not found.
- */
-@CinemaDSL
-public interface QueryFilmsQuery : QueryFilmsSelection, FilmProjection
-
-/**
- * Find actors by firstName, lastName, birthday and gender.
- * Returns empty list if not found.
- */
-@CinemaDSL
-public interface QueryActorsSelection {
-  /**
-   * Part of first name of actor to search
-   */
-  public var firstName: String?
-
-  /**
-   * Part of last name of actor to search
-   */
-  public var lastName: String?
-
-  /**
-   * Find actors whose birthday is greater than or equal to birthdayFrom
-   */
-  public var birthdayFrom: LocalDate?
-
-  /**
-   * Find actors whose birthday is less than or equal to birthdayTo
-   */
-  public var birthdayTo: LocalDate?
-
-  /**
-   * Gender of actor to search
-   */
-  public var gender: Gender?
-
-  /**
-   * Limit of result list.
-   * Put -1 to be unlimited.  
-   * > Default: 10
-   */
-  public var limit: Int?
-
-  /**
-   * Offset of result list.  
-   * > Default: 0
-   */
-  public var offset: Int?
-}
-
-/**
- * Find actors by firstName, lastName, birthday and gender.
- * Returns empty list if not found.
- */
-@CinemaDSL
-public interface QueryActorsQuery : QueryActorsSelection, ActorProjection

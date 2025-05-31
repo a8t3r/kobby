@@ -20,12 +20,10 @@ import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.dto.FilmDto
 import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.dto.Gender
 import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.dto.Genre
 import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.entity.Actor
+import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.entity.ActorProjection
 import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.entity.Country
 import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.entity.CountryProjection
-import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.entity.EntityFieldsSelection
 import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.entity.Film
-import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.entity.FilmActorsQuery
-import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.entity.FilmActorsSelection
 import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.entity.FilmProjection
 import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.entity.Tag
 import io.github.ermadmi78.kobby.testcases.cinema.kobby.kotlin.entity.TagProjection
@@ -60,7 +58,7 @@ internal class FilmImpl(
 
   override val fields: Map<String, Any?>
     get() {
-      if (__innerProjection.__innerFields1 == null) {
+      if (!__innerProjection.__innerFields1) {
         error("Property [fields] is not available - add [fields] projection to switch on it")
       }
       return __innerDto.fields!!
@@ -133,7 +131,7 @@ internal class FilmImpl(
       append("id").append('=').append(id)
     }
 
-    if (__innerProjection.__innerFields1 != null) {
+    if (__innerProjection.__innerFields1) {
       if (counter++ > 0) {
         append(", ")
       }
@@ -193,7 +191,9 @@ internal class FilmImpl(
 }
 
 internal open class FilmProjectionImpl : FilmProjection {
-  internal var __innerFields1: EntityFieldsSelectionImpl? = null
+  internal var __innerFields1: Boolean = false
+
+  internal var __innerFields1Keys: List<String>? = null
 
   internal var __innerTags2: TagProjectionImpl? = null
 
@@ -201,12 +201,32 @@ internal open class FilmProjectionImpl : FilmProjection {
 
   internal var __innerGenre4: Boolean = false
 
+  override val genre: Unit
+    get() {
+      __innerGenre4 = true
+    }
+
   internal var __innerCountry6: CountryProjectionImpl? = null
 
-  internal var __innerActors7: FilmActorsQueryImpl? = null
+  internal var __innerActors7: ActorProjectionImpl? = null
 
-  override fun fields(__selection: EntityFieldsSelection.() -> Unit) {
-    __innerFields1 = EntityFieldsSelectionImpl().apply(__selection)
+  internal var __innerActors7FirstName: String? = null
+
+  internal var __innerActors7LastName: String? = null
+
+  internal var __innerActors7BirthdayFrom: LocalDate? = null
+
+  internal var __innerActors7BirthdayTo: LocalDate? = null
+
+  internal var __innerActors7Gender: Gender? = null
+
+  internal var __innerActors7Limit: Int? = null
+
+  internal var __innerActors7Offset: Int? = null
+
+  override fun fields(keys: List<String>?) {
+    __innerFields1 = true
+    __innerFields1Keys = keys
   }
 
   override fun tags(__projection: TagProjection.() -> Unit) {
@@ -217,24 +237,34 @@ internal open class FilmProjectionImpl : FilmProjection {
     __innerTitle3 = false
   }
 
-  override fun genre() {
-    __innerGenre4 = true
-  }
-
   override fun country(__projection: CountryProjection.() -> Unit) {
     __innerCountry6 = CountryProjectionImpl().apply(__projection)
   }
 
-  override fun actors(__query: FilmActorsQuery.() -> Unit) {
-    __innerActors7 = FilmActorsQueryImpl().apply(__query)
+  override fun actors(
+    firstName: String?,
+    lastName: String?,
+    birthdayFrom: LocalDate?,
+    birthdayTo: LocalDate?,
+    gender: Gender?,
+    limit: Int?,
+    offset: Int?,
+    __projection: ActorProjection.() -> Unit,
+  ) {
+    __innerActors7 = ActorProjectionImpl().apply(__projection)
+    __innerActors7FirstName = firstName
+    __innerActors7LastName = lastName
+    __innerActors7BirthdayFrom = birthdayFrom
+    __innerActors7BirthdayTo = birthdayTo
+    __innerActors7Gender = gender
+    __innerActors7Limit = limit
+    __innerActors7Offset = offset
   }
 
   @Suppress("UNUSED_PARAMETER", "UNUSED_CHANGED_VALUE", "KotlinConstantConditions")
   internal fun ___innerRepeatProjection(ignore: Set<String>, __projection: FilmProjection) {
-    if ("fields" !in ignore && __innerFields1 != null) {
-      __projection.fields {
-        this@FilmProjectionImpl.__innerFields1!!.___innerRepeatSelection(this)
-      }
+    if ("fields" !in ignore && __innerFields1) {
+      __projection.fields(__innerFields1Keys)
     }
     if ("tags" !in ignore && __innerTags2 != null) {
       __projection.tags {
@@ -245,7 +275,7 @@ internal open class FilmProjectionImpl : FilmProjection {
       __projection.__withoutTitle()
     }
     if ("genre" !in ignore && __innerGenre4) {
-      __projection.genre()
+      __projection.genre
     }
     if ("country" !in ignore && __innerCountry6 != null) {
       __projection.country {
@@ -253,9 +283,10 @@ internal open class FilmProjectionImpl : FilmProjection {
       }
     }
     if ("actors" !in ignore && __innerActors7 != null) {
-      __projection.actors {
+      __projection.actors(__innerActors7FirstName, __innerActors7LastName,
+          __innerActors7BirthdayFrom, __innerActors7BirthdayTo, __innerActors7Gender,
+          __innerActors7Limit, __innerActors7Offset) {
         this@FilmProjectionImpl.__innerActors7!!.___innerRepeatProjection(setOf(), this)
-        this@FilmProjectionImpl.__innerActors7!!.___innerRepeatSelection(this)
       }
     }
   }
@@ -270,21 +301,21 @@ internal open class FilmProjectionImpl : FilmProjection {
     body: StringBuilder,
     arguments: MutableMap<String, Any>,
   ) {
-    if ("fields" !in ignore && __innerFields1 != null) {
+    if ("fields" !in ignore && __innerFields1) {
       body.append(' ').append("fields")
       var counter = 0
-      val addBrackets = __innerFields1!!.keys != null
+      val addBrackets = __innerFields1Keys != null
       if (addBrackets) {
         body.append('(')
       }
 
       // Argument: fields.keys
-      if (__innerFields1!!.keys != null) {
+      if (__innerFields1Keys != null) {
         if (counter++ > 0) {
           body.append(", ")
         }
         val arg = "arg" + arguments.size
-        arguments[arg] = __innerFields1!!.keys!!
+        arguments[arg] = __innerFields1Keys!!
         body.append("keys").append(": ").append('$').append(arg)
 
         if (header.isNotEmpty()) {
@@ -312,21 +343,21 @@ internal open class FilmProjectionImpl : FilmProjection {
     if ("actors" !in ignore && __innerActors7 != null) {
       body.append(' ').append("actors")
       var counter = 0
-      val addBrackets = __innerActors7!!.firstName != null || __innerActors7!!.lastName != null ||
-          __innerActors7!!.birthdayFrom != null || __innerActors7!!.birthdayTo != null ||
-          __innerActors7!!.gender != null || __innerActors7!!.limit != null ||
-          __innerActors7!!.offset != null
+      val addBrackets = __innerActors7FirstName != null || __innerActors7LastName != null ||
+          __innerActors7BirthdayFrom != null || __innerActors7BirthdayTo != null ||
+          __innerActors7Gender != null || __innerActors7Limit != null ||
+          __innerActors7Offset != null
       if (addBrackets) {
         body.append('(')
       }
 
       // Argument: actors.firstName
-      if (__innerActors7!!.firstName != null) {
+      if (__innerActors7FirstName != null) {
         if (counter++ > 0) {
           body.append(", ")
         }
         val arg = "arg" + arguments.size
-        arguments[arg] = __innerActors7!!.firstName!!
+        arguments[arg] = __innerActors7FirstName!!
         body.append("firstName").append(": ").append('$').append(arg)
 
         if (header.isNotEmpty()) {
@@ -336,12 +367,12 @@ internal open class FilmProjectionImpl : FilmProjection {
       }
 
       // Argument: actors.lastName
-      if (__innerActors7!!.lastName != null) {
+      if (__innerActors7LastName != null) {
         if (counter++ > 0) {
           body.append(", ")
         }
         val arg = "arg" + arguments.size
-        arguments[arg] = __innerActors7!!.lastName!!
+        arguments[arg] = __innerActors7LastName!!
         body.append("lastName").append(": ").append('$').append(arg)
 
         if (header.isNotEmpty()) {
@@ -351,12 +382,12 @@ internal open class FilmProjectionImpl : FilmProjection {
       }
 
       // Argument: actors.birthdayFrom
-      if (__innerActors7!!.birthdayFrom != null) {
+      if (__innerActors7BirthdayFrom != null) {
         if (counter++ > 0) {
           body.append(", ")
         }
         val arg = "arg" + arguments.size
-        arguments[arg] = __innerActors7!!.birthdayFrom!!
+        arguments[arg] = __innerActors7BirthdayFrom!!
         body.append("birthdayFrom").append(": ").append('$').append(arg)
 
         if (header.isNotEmpty()) {
@@ -366,12 +397,12 @@ internal open class FilmProjectionImpl : FilmProjection {
       }
 
       // Argument: actors.birthdayTo
-      if (__innerActors7!!.birthdayTo != null) {
+      if (__innerActors7BirthdayTo != null) {
         if (counter++ > 0) {
           body.append(", ")
         }
         val arg = "arg" + arguments.size
-        arguments[arg] = __innerActors7!!.birthdayTo!!
+        arguments[arg] = __innerActors7BirthdayTo!!
         body.append("birthdayTo").append(": ").append('$').append(arg)
 
         if (header.isNotEmpty()) {
@@ -381,12 +412,12 @@ internal open class FilmProjectionImpl : FilmProjection {
       }
 
       // Argument: actors.gender
-      if (__innerActors7!!.gender != null) {
+      if (__innerActors7Gender != null) {
         if (counter++ > 0) {
           body.append(", ")
         }
         val arg = "arg" + arguments.size
-        arguments[arg] = __innerActors7!!.gender!!
+        arguments[arg] = __innerActors7Gender!!
         body.append("gender").append(": ").append('$').append(arg)
 
         if (header.isNotEmpty()) {
@@ -396,12 +427,12 @@ internal open class FilmProjectionImpl : FilmProjection {
       }
 
       // Argument: actors.limit
-      if (__innerActors7!!.limit != null) {
+      if (__innerActors7Limit != null) {
         if (counter++ > 0) {
           body.append(", ")
         }
         val arg = "arg" + arguments.size
-        arguments[arg] = __innerActors7!!.limit!!
+        arguments[arg] = __innerActors7Limit!!
         body.append("limit").append(": ").append('$').append(arg)
 
         if (header.isNotEmpty()) {
@@ -411,12 +442,12 @@ internal open class FilmProjectionImpl : FilmProjection {
       }
 
       // Argument: actors.offset
-      if (__innerActors7!!.offset != null) {
+      if (__innerActors7Offset != null) {
         if (counter++ > 0) {
           body.append(", ")
         }
         val arg = "arg" + arguments.size
-        arguments[arg] = __innerActors7!!.offset!!
+        arguments[arg] = __innerActors7Offset!!
         body.append("offset").append(": ").append('$').append(arg)
 
         if (header.isNotEmpty()) {
@@ -489,33 +520,6 @@ internal open class FilmProjectionImpl : FilmProjection {
     ____innerBuildActors7(ignore, header, body, arguments)
 
     body.append(' ').append('}')
-  }
-}
-
-internal class FilmActorsQueryImpl : ActorProjectionImpl(), FilmActorsQuery {
-  override var firstName: String? = null
-
-  override var lastName: String? = null
-
-  override var birthdayFrom: LocalDate? = null
-
-  override var birthdayTo: LocalDate? = null
-
-  override var gender: Gender? = null
-
-  override var limit: Int? = null
-
-  override var offset: Int? = null
-
-  @Suppress("UNUSED_PARAMETER", "UNUSED_CHANGED_VALUE", "KotlinConstantConditions")
-  internal fun ___innerRepeatSelection(__selection: FilmActorsSelection) {
-    __selection.firstName = firstName
-    __selection.lastName = lastName
-    __selection.birthdayFrom = birthdayFrom
-    __selection.birthdayTo = birthdayTo
-    __selection.gender = gender
-    __selection.limit = limit
-    __selection.offset = offset
   }
 }
 
