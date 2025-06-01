@@ -18,8 +18,11 @@ package io.github.ermadmi78.kobby.testcases.simple.kobby.kotlin.entity.`impl`
 import io.github.ermadmi78.kobby.testcases.simple.kobby.kotlin.MismatchContext
 import io.github.ermadmi78.kobby.testcases.simple.kobby.kotlin.dto.QueryDto
 import io.github.ermadmi78.kobby.testcases.simple.kobby.kotlin.entity.Fake
-import io.github.ermadmi78.kobby.testcases.simple.kobby.kotlin.entity.FakeProjection
 import io.github.ermadmi78.kobby.testcases.simple.kobby.kotlin.entity.Query
+import io.github.ermadmi78.kobby.testcases.simple.kobby.kotlin.entity.QueryFakeIntQuery
+import io.github.ermadmi78.kobby.testcases.simple.kobby.kotlin.entity.QueryFakeIntSelection
+import io.github.ermadmi78.kobby.testcases.simple.kobby.kotlin.entity.QueryFakeStringQuery
+import io.github.ermadmi78.kobby.testcases.simple.kobby.kotlin.entity.QueryFakeStringSelection
 import io.github.ermadmi78.kobby.testcases.simple.kobby.kotlin.entity.QueryProjection
 import kotlin.Any
 import kotlin.Int
@@ -85,34 +88,30 @@ internal class QueryImpl(
 }
 
 internal open class QueryProjectionImpl : QueryProjection {
-  internal var __innerFakeInt0: FakeProjectionImpl? = null
+  internal var __innerFakeInt0: QueryFakeIntQueryImpl? = null
 
-  internal var __innerFakeInt0Fake: Int? = null
+  internal var __innerFakeString1: QueryFakeStringQueryImpl? = null
 
-  internal var __innerFakeString1: FakeProjectionImpl? = null
-
-  internal var __innerFakeString1Fake: String? = null
-
-  override fun fakeInt(fake: Int?, __projection: FakeProjection.() -> Unit) {
-    __innerFakeInt0 = FakeProjectionImpl().apply(__projection)
-    __innerFakeInt0Fake = fake
+  override fun fakeInt(__query: QueryFakeIntQuery.() -> Unit) {
+    __innerFakeInt0 = QueryFakeIntQueryImpl().apply(__query)
   }
 
-  override fun fakeString(fake: String?, __projection: FakeProjection.() -> Unit) {
-    __innerFakeString1 = FakeProjectionImpl().apply(__projection)
-    __innerFakeString1Fake = fake
+  override fun fakeString(__query: QueryFakeStringQuery.() -> Unit) {
+    __innerFakeString1 = QueryFakeStringQueryImpl().apply(__query)
   }
 
   @Suppress("UNUSED_PARAMETER", "UNUSED_CHANGED_VALUE", "KotlinConstantConditions")
   internal fun ___innerRepeatProjection(ignore: Set<String>, __projection: QueryProjection) {
     if ("fakeInt" !in ignore && __innerFakeInt0 != null) {
-      __projection.fakeInt(__innerFakeInt0Fake) {
+      __projection.fakeInt {
         this@QueryProjectionImpl.__innerFakeInt0!!.___innerRepeatProjection(setOf(), this)
+        this@QueryProjectionImpl.__innerFakeInt0!!.___innerRepeatSelection(this)
       }
     }
     if ("fakeString" !in ignore && __innerFakeString1 != null) {
-      __projection.fakeString(__innerFakeString1Fake) {
+      __projection.fakeString {
         this@QueryProjectionImpl.__innerFakeString1!!.___innerRepeatProjection(setOf(), this)
+        this@QueryProjectionImpl.__innerFakeString1!!.___innerRepeatSelection(this)
       }
     }
   }
@@ -130,18 +129,18 @@ internal open class QueryProjectionImpl : QueryProjection {
     if ("fakeInt" !in ignore && __innerFakeInt0 != null) {
       body.append(' ').append("fakeInt")
       var counter = 0
-      val addBrackets = __innerFakeInt0Fake != null
+      val addBrackets = __innerFakeInt0!!.fake != null
       if (addBrackets) {
         body.append('(')
       }
 
       // Argument: fakeInt.fake
-      if (__innerFakeInt0Fake != null) {
+      if (__innerFakeInt0!!.fake != null) {
         if (counter++ > 0) {
           body.append(", ")
         }
         val arg = "arg" + arguments.size
-        arguments[arg] = __innerFakeInt0Fake!!
+        arguments[arg] = __innerFakeInt0!!.fake!!
         body.append("fake").append(": ").append('$').append(arg)
 
         if (header.isNotEmpty()) {
@@ -172,18 +171,18 @@ internal open class QueryProjectionImpl : QueryProjection {
     if ("fakeString" !in ignore && __innerFakeString1 != null) {
       body.append(' ').append("fakeString")
       var counter = 0
-      val addBrackets = __innerFakeString1Fake != null
+      val addBrackets = __innerFakeString1!!.fake != null
       if (addBrackets) {
         body.append('(')
       }
 
       // Argument: fakeString.fake
-      if (__innerFakeString1Fake != null) {
+      if (__innerFakeString1!!.fake != null) {
         if (counter++ > 0) {
           body.append(", ")
         }
         val arg = "arg" + arguments.size
-        arguments[arg] = __innerFakeString1Fake!!
+        arguments[arg] = __innerFakeString1!!.fake!!
         body.append("fake").append(": ").append('$').append(arg)
 
         if (header.isNotEmpty()) {
@@ -220,6 +219,42 @@ internal open class QueryProjectionImpl : QueryProjection {
     ____innerBuildFakeString1(ignore, header, body, arguments)
 
     body.append(' ').append('}')
+  }
+}
+
+internal class QueryFakeIntQueryImpl : FakeProjectionImpl(), QueryFakeIntQuery {
+  internal var __innerFakeInt0Fake: Int? = null
+
+  override var fake: Int?
+    get() {
+      super.__innerFake0 = true
+      return __innerFakeInt0Fake
+    }
+    set(`value`) {
+      __innerFakeInt0Fake = value
+    }
+
+  @Suppress("UNUSED_PARAMETER", "UNUSED_CHANGED_VALUE", "KotlinConstantConditions")
+  internal fun ___innerRepeatSelection(__selection: QueryFakeIntSelection) {
+    __selection.fake = __innerFakeInt0Fake
+  }
+
+
+internal class QueryFakeStringQueryImpl : FakeProjectionImpl(), QueryFakeStringQuery {
+  internal var __innerFakeString1Fake: String? = null
+
+  override var fake: String?
+    get() {
+      super.__innerFake0 = true
+      return __innerFakeString1Fake
+    }
+    set(`value`) {
+      __innerFakeString1Fake = value
+    }
+
+  @Suppress("UNUSED_PARAMETER", "UNUSED_CHANGED_VALUE", "KotlinConstantConditions")
+  internal fun ___innerRepeatSelection(__selection: QueryFakeStringSelection) {
+    __selection.fake = __innerFakeString1Fake
   }
 }
 

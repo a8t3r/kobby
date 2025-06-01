@@ -34,10 +34,26 @@ public interface Query {
 
 @MismatchDSL
 public interface QueryProjection {
-  public fun fakeInt(fake: Int? = null, __projection: FakeProjection.() -> Unit)
+  public fun fakeInt(__query: QueryFakeIntQuery.() -> Unit)
 
-  public fun fakeString(fake: String? = null, __projection: FakeProjection.() -> Unit)
+  public fun fakeString(__query: QueryFakeStringQuery.() -> Unit)
 
   public fun __minimize() {
   }
 }
+
+@MismatchDSL
+public interface QueryFakeIntSelection {
+  public var fake: Int?
+}
+
+@MismatchDSL
+public interface QueryFakeIntQuery : QueryFakeIntSelection, FakeProjection
+
+@MismatchDSL
+public interface QueryFakeStringSelection {
+  public var fake: String?
+}
+
+@MismatchDSL
+public interface QueryFakeStringQuery : QueryFakeStringSelection, FakeProjection
