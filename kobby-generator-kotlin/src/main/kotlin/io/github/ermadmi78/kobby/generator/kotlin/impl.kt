@@ -405,7 +405,7 @@ private fun FileSpecBuilder.buildEntity(node: KobbyNode, layout: KotlinLayout) =
 }
 
 private fun FileSpecBuilder.buildSelection(node: KobbyNode, layout: KotlinLayout) = with(layout) {
-    node.fields.values.asSequence().filter { !it.isOverride && it.isSelectionEnabled }.forEach { field ->
+    node.fields.values.asSequence().filter { !it.isOverride && it.isSelection }.forEach { field ->
         val isQuery = field.type.hasProjection
         buildClass(if (isQuery) field.implQueryName else field.implSelectionName) {
             if (impl.internal) {
@@ -414,6 +414,10 @@ private fun FileSpecBuilder.buildSelection(node: KobbyNode, layout: KotlinLayout
             if (isQuery) {
                 superclass(field.type.node.implProjectionClass)
             }
+
+            val parentFields = if (!isQuery) emptyMap() else field.type.node.fields.values.filter { it.isProjectionPropertyEnabled }.associateBy { it.name }
+            fun KobbyArgument.isProjectionPropertyEnabled() = layout.entity.projection.enableNotationWithoutParentheses && name in parentFields
+
             addSuperinterface(if (isQuery) field.queryClass else field.selectionClass)
             field.arguments.values.asSequence().filter { it.isInitialized }.forEach { arg ->
                 val argType = if (dto.serialization.enabled) {
@@ -421,10 +425,33 @@ private fun FileSpecBuilder.buildSelection(node: KobbyNode, layout: KotlinLayout
                 } else {
                     arg.entityType
                 }
+
+                if (arg.isProjectionPropertyEnabled()) {
+                    buildProperty(arg.innerName, argType) {
+                        if (impl.internal) {
+                            addModifiers(INTERNAL)
+                        }
+                        mutable()
+                        initializer(field.innerInitializer)
+                    }
+                }
+
                 buildProperty(arg.name, argType) {
                     mutable()
                     addModifiers(OVERRIDE)
-                    initializer("null")
+                    if (arg.isProjectionPropertyEnabled()) {
+                        val parentField = parentFields.getValue(arg.name)
+                        buildGetter {
+                            addStatement("super.${parentField.innerName}·=·${!parentField.isDefault}")
+                            addStatement("return·${arg.innerName}")
+                        }
+                        buildSetter {
+                            addParameter("value", argType)
+                            addStatement("${arg.innerName}·=·value")
+                        }
+                    } else {
+                        initializer("null")
+                    }
                 }
             }
 
@@ -436,7 +463,8 @@ private fun FileSpecBuilder.buildSelection(node: KobbyNode, layout: KotlinLayout
                 val repeat = entity.selection.selectionArgument
                 buildParameter(repeat, field.selectionClass)
                 field.arguments.values.asSequence().filter { it.isInitialized }.forEach { arg ->
-                    addStatement("$repeat.${arg.name.escape()}·=·${arg.name.escape()}")
+                    val argName = if (arg.isProjectionPropertyEnabled()) arg.innerName else arg.name
+                    addStatement("$repeat.${arg.name.escape()}·=·${argName.escape()}")
                 }
             }
         }
@@ -477,7 +505,7 @@ private fun FileSpecBuilder.buildProjection(node: KobbyNode, layout: KotlinLayou
                 initializer(field.innerInitializer)
             }
             field.arguments.values.asSequence()
-                .filter { !field.isSelectionEnabled || !it.isInitialized }
+                .filter { !field.isSelection || !it.isInitialized }
                 .forEach { arg ->
                     val argType = if (dto.serialization.enabled) {
                         arg.entityTypeWithSerializer.nullable()
@@ -494,17 +522,18 @@ private fun FileSpecBuilder.buildProjection(node: KobbyNode, layout: KotlinLayou
                 }
 
             if (field.isProjectionPropertyEnabled) {
-                buildProperty(field.projectionFieldName, UNIT) {
+                buildProperty(field.projectionFieldName, ANY.nullable()) {
                     addModifiers(OVERRIDE)
                     buildGetter {
                         addStatement("${field.innerName}·=·${!field.isDefault}")
+                        addStatement("return·null")
                     }
                 }
             } else {
                 buildFunction(field.projectionFieldName) {
                     addModifiers(OVERRIDE)
                     field.arguments.values.asSequence()
-                        .filter { !field.isSelectionEnabled || !it.isInitialized }
+                        .filter { !field.isSelection || !it.isInitialized }
                         .forEach { arg ->
                             buildParameter(arg.name, arg.entityType)
                         }
@@ -519,7 +548,7 @@ private fun FileSpecBuilder.buildProjection(node: KobbyNode, layout: KotlinLayou
                     } ?: addStatement("${field.innerName}·=·${!field.isDefault}")
 
                     field.arguments.values.asSequence()
-                        .filter { !field.isSelectionEnabled || !it.isInitialized }
+                        .filter { !field.isSelection || !it.isInitialized }
                         .forEach { arg ->
                             addStatement("${arg.innerName}·=·${arg.name.escape()}")
                         }
@@ -534,7 +563,7 @@ private fun FileSpecBuilder.buildProjection(node: KobbyNode, layout: KotlinLayou
                             )
                             addStatement("${subObject.innerProjectionOnName}.${subField.innerName}·=·${field.innerName}")
                             subField.arguments.values.asSequence()
-                                .filter { !subField.isSelectionEnabled || !it.isInitialized }
+                                .filter { !subField.isSelection || !it.isInitialized }
                                 .forEach { subArg ->
                                     addStatement("${subObject.innerProjectionOnName}.${subArg.innerName}·=·${subArg.name.escape()}")
                                 }
@@ -596,11 +625,11 @@ private fun FileSpecBuilder.buildProjection(node: KobbyNode, layout: KotlinLayou
 
                 ifFlow("%S·!in·$ignore·&&·$condition", field.name) {
                     var args = field.arguments.values.asSequence()
-                        .filter { !field.isSelectionEnabled || !it.isInitialized }
+                        .filter { !field.isSelection || !it.isInitialized }
                         .joinToString {
                             it.innerName + if (it.isInitialized) "" else "!!"
                         }
-                    if (field.type.hasProjection || field.isSelectionEnabled) {
+                    if (field.type.hasProjection || field.isSelection) {
                         if (args.isNotEmpty()) {
                             args = "($args)"
                         }
@@ -611,7 +640,7 @@ private fun FileSpecBuilder.buildProjection(node: KobbyNode, layout: KotlinLayou
                                             ".${field.innerName}!!.${impl.repeatProjectionFunName}(%T(),·this)"
                                 }
                             }
-                            if (field.isSelectionEnabled) statement {
+                            if (field.isSelection) statement {
                                 "this@${node.implProjectionName}" +
                                         ".${field.innerName}!!.${impl.repeatSelectionFunName}(this)"
                             }
@@ -749,7 +778,7 @@ private fun FunSpecBuilder.writeFieldProjectionBuilderCode(field: KobbyField, la
                 else args.asSequence()
                     .map { arg ->
                         require(arg.isInitialized) { "Invalid algorithm" }
-                        if (arg.isSelectionEnabled) "${field.innerName}!!.${arg.name.escape()}" else arg.innerName
+                        if (arg.isSelection) "${field.innerName}!!.${arg.name.escape()}" else arg.innerName
                     }
                     .joinToString(" || ") { "$it·!=·null" }
             }
@@ -760,7 +789,7 @@ private fun FunSpecBuilder.writeFieldProjectionBuilderCode(field: KobbyField, la
             addStatement("")
             field.arguments { arg ->
                 val argName =
-                    if (arg.isSelectionEnabled) "${field.innerName}!!.${arg.name.escape()}" else arg.innerName
+                    if (arg.isSelection) "${field.innerName}!!.${arg.name.escape()}" else arg.innerName
                 addComment("Argument: ${field.name}.${arg.name}")
                 ifFlow(if (arg.isInitialized) "$argName·!=·null" else "true") {
                     ifFlow("counter++·>·0") {

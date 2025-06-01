@@ -1,5 +1,6 @@
 package io.github.ermadmi78.kobby.generator.kotlin
 
+import com.squareup.kotlinpoet.ANY
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.KModifier.ABSTRACT
 import com.squareup.kotlinpoet.KModifier.OVERRIDE
@@ -136,7 +137,7 @@ private fun FileSpecBuilder.buildProjection(node: KobbyNode, layout: KotlinLayou
         }
         node.fields.values.asSequence().filter { !it.isRequired }.forEach { field ->
             if (field.isProjectionPropertyEnabled) {
-                buildProperty(field.projectionFieldName, UNIT) {
+                buildProperty(field.projectionFieldName, ANY.nullable()) {
                     addModifiers(ABSTRACT)
                     if (field.isOverride) {
                         addModifiers(OVERRIDE)
@@ -156,7 +157,7 @@ private fun FileSpecBuilder.buildProjection(node: KobbyNode, layout: KotlinLayou
                     }
 
                     field.arguments.values.asSequence()
-                        .filter { !field.isSelectionEnabled || !it.isInitialized }
+                        .filter { !field.isSelection || !it.isInitialized }
                         .forEach { arg ->
                             buildParameter(arg.name, arg.entityType) {
                                 if (!field.isOverride && arg.isInitialized && !field.isMultiBase) {
@@ -197,7 +198,7 @@ private fun FileSpecBuilder.buildProjection(node: KobbyNode, layout: KotlinLayou
 }
 
 private fun FileSpecBuilder.buildSelection(node: KobbyNode, layout: KotlinLayout) = with(layout) {
-    node.fields.values.asSequence().filter { !it.isOverride && it.isSelectionEnabled }.forEach { field ->
+    node.fields.values.asSequence().filter { !it.isOverride && it.isSelection }.forEach { field ->
         buildInterface(field.selectionName) {
             addAnnotation(context.dslClass)
             field.comments {

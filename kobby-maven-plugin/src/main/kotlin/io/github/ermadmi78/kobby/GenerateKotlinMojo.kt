@@ -328,14 +328,6 @@ class GenerateKotlinMojo : AbstractMojo() {
             "Schema validation failed.".throwIt(e)
         }
 
-        try {
-            kobbySchema.validateKotlin(layout).forEach { warning ->
-                log.warn(warning)
-            }
-        } catch (e: Exception) {
-            "Kotlin schema validation failed.".throwIt(e)
-        }
-
         val output = try {
             generateKotlin(kobbySchema, layout)
         } catch (e: Exception) {
