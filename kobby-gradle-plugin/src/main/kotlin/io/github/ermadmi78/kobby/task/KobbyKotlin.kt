@@ -928,6 +928,7 @@ open class KobbyKotlin : DefaultTask() {
         adapterKtorPackageName.convention("adapter.ktor")
         adapterKtorPostfix.convention("KtorAdapter")
         adapterKtorReceiveTimeoutMillis.convention(10_000L)
+        enableNotationWithoutParentheses.convention(false)
 
         outputDirectory.convention(project.layout.buildDirectory.dir("generated/sources/kobby/main/kotlin"))
     }
